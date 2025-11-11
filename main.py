@@ -5,6 +5,10 @@ import datetime
 import time
 import math
 
+import os
+import json
+import shutil
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,6 +17,7 @@ from selenium.webdriver.common.keys import Keys
 
 from modules.selenium_config import *
 from modules.gui import *
+from modules.escolher_fotos import *
 
 TOTAL_PROMPTS_DESEJADOS = 3
 
@@ -138,6 +143,30 @@ def enviar_prompts_krea(driver, prompts_por_variacao):
                 continue
 
 
+
+def copiar_melhores_fotos():
+    # Caminho da pasta onde estão as imagens
+    input_dir = "gatos"
+    # Caminho da subpasta para onde os arquivos serão copiados
+    output_dir = os.path.join(input_dir, "selected")
+    os.makedirs(output_dir, exist_ok=True)
+    
+    json_melhores_fotos = melhores_fotos(input_dir)
+
+    # Percorre cada entrada do JSON
+    for partial_name in json_melhores_fotos["selected_images"]:
+        for file_name in os.listdir(input_dir):
+            # Ignora a própria subpasta
+            if os.path.isdir(os.path.join(input_dir, file_name)):
+                continue
+            
+            # Se o nome parcial estiver contido no nome do arquivo
+            if partial_name in file_name:
+                src = os.path.join(input_dir, file_name)
+                dst = os.path.join(output_dir, file_name)
+                shutil.copy2(src, dst)
+                print(f"✅ Copiado: {file_name}")
+
 def main():
     print("[INÍCIO] Iniciando o script de automação no PJe...")
     os.makedirs(r"C:/chrome_debug_profile", exist_ok=True)
@@ -235,17 +264,20 @@ def main():
     driver.get("https://www.krea.ai/image")
     time.sleep(1)
     enviar_prompts_krea(driver, prompts_por_variacao)
+
+
+    print("\n=== Agora vamos analisar e copiar as melhores fotos para a pasta selected ===")
+    copiar_melhores_fotos()
+
     
 
     print("[OK] Script finalizado. Pode fechar o navegador.")
     mostrar_notificacao("[OK] Script finalizado. Pode fechar o navegador.")
 
 
+
+
+
 if __name__ == "__main__":
     main()
     
-
-
-
-
-
